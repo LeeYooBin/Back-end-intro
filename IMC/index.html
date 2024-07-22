@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Importando estilos CSS -->
+  <link rel="stylesheet" href="./src/style/global.css">
+  <link rel="stylesheet" href="./src/style/card.css">
+  <link rel="stylesheet" href="./src/style/form.css">
+  <link rel="stylesheet" href="./src/style/result.css">
+  <title>Calculadora de IMC</title>
+</head>
+<body>
+  <!-- Container principal do card -->
+  <div class="card">
+    <!-- Título e descrição -->
+    <div>
+      <h1 class="title">Calculadora de IMC</h1>
+      <p class="description">
+        Digite o seu peso e altura para calcular o seu índice de massa corpórea.
+      </p>
+    </div>
+    <!-- Formulário de entrada de dados -->
+    <form id="form">
+      <div class="input-wrapper">
+        <label for="weight-input">Peso (kg)</label>
+        <input type="number" step="0.1" placeholder="Digite o seu peso" id="weight-input" class="weight-input" required>
+      </div>
+      <div class="input-wrapper">
+        <label for="height-input">Altura (m ou cm)</label>
+        <input type="number" step="0.01" placeholder="Digite a sua altura" id="height-input" class="height-input" required>
+      </div>
+      <button type="submit" id="submit-button">
+        Calcular IMC
+      </button>
+    </form>
+    <!-- Resultados -->
+    <div class="result-wrapper">
+      <div class="bmi-result">
+        <p>IMC</p>
+        <p class="bmi-view">-</p>
+      </div>
+      <div class="category-result">
+        <p>Classificação</p>
+        <p class="category-view">-</p>
+      </div>
+    </div>
+  </div>
+  <!-- Script JS para cálculo do IMC -->
+  <script src="./src/script/bmi-calculator.js"></script>
+</body>
+</html>

@@ -6,10 +6,13 @@ class Character {
     this.alive = true;
     this.goldCollected = false;
     this.messages = [];
+    this.score = 0; // Inicializa a pontuação
   }
 
   // Função responsável pela movimentação da personagem
   move(direction) {
+    if (!this.alive) return;
+
     switch (direction) {
       case "up":
         if (this.position.y > 0) {
@@ -42,12 +45,16 @@ class Character {
       default:
         this.messages.push("Movimento inválido");
     }
+    this.score -= 1; // Perde 1 ponto ao se mover
   }
 
   // Função responsável por atirar flechas
   shoot() {
+    if (!this.alive) return false;
+
     if (this.arrows > 0) {
       this.arrows -= 1;
+      this.score -= 10; // Perde 10 pontos ao atirar flecha
       return true;
     }
     this.messages.push("Você não tem mais flechas.");
@@ -61,6 +68,8 @@ class Character {
 
   // Função para coletar o ouro
   collectGold() {
+    if (!this.alive) return;
+
     this.goldCollected = true;
     this.messages.push("Você encontrou o ouro! Agora volte ao ponto de partida para vencer.");
   }
@@ -70,6 +79,17 @@ class Character {
     const messages = this.messages.slice();
     this.messages = [];
     return messages;
+  }
+
+  // Função para finalizar o jogo com base na vitória ou derrota
+  endGame(isVictory) {
+    if (isVictory) {
+      this.score += 1000; // Ganha 1000 pontos ao vencer
+      this.messages.push(`Parabéns! Você coletou o ouro e voltou ao ponto de partida. Você venceu com ${this.score} pontos!`);
+    } else {
+      this.score -= 1000; // Perde 1000 pontos ao morrer
+      this.messages.push(`Game Over! Você morreu com ${this.score} pontos.`);
+    }
   }
 }
 

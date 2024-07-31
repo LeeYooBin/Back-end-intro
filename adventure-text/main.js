@@ -57,6 +57,7 @@ const playGame = async () => {
       world.displayWorld(player);
     }
     world.checkAdjacents(player);
+    console.log(`Pontuação: ${player.score}`);
 
     const messages = player.getMessages();
     if (messages.length > 0) {
@@ -97,19 +98,15 @@ const playGame = async () => {
       player.move(direction);
 
       if (world.isWumpus(player.position)) {
-        player.messages.push("Você foi devorado pelo Wumpus!");
-        player.alive = false;
-        console.clear();
-        world.displayWorld(player);
+        player.endGame(false);
         player.getMessages().forEach(msg => console.log(msg));
         await waitForKeyPress();
+        break;
       } else if (world.isPit(player.position)) {
-        player.messages.push("Você caiu em um buraco!");
-        player.alive = false;
-        console.clear();
-        world.displayWorld(player);
+        player.endGame(false);
         player.getMessages().forEach(msg => console.log(msg));
         await waitForKeyPress();
+        break;
       } else if (world.isGold(player.position)) {
         player.collectGold();
         world.goldPosition = null;
@@ -143,7 +140,7 @@ const playGame = async () => {
 
       if (player.shoot()) {
         const hitPosition = { ...player.position };
-
+      
         switch (shootDirection) {
           case "up":
             hitPosition.y -= 1;
@@ -158,7 +155,7 @@ const playGame = async () => {
             hitPosition.x += 1;
             break;
         }
-
+      
         if (world.isWumpus(hitPosition)) {
           player.messages.push("Você matou o Wumpus! Agora colete o ouro e volte ao ponto de partida.");
           world.wumpusPosition = null;
@@ -171,9 +168,7 @@ const playGame = async () => {
     }
 
     if (player.goldCollected && player.position.x === 0 && player.position.y === 0) {
-      console.clear();
-      world.displayWorld(player);
-      player.messages.push("Parabéns! Você coletou o ouro e voltou ao ponto de partida. Você venceu!");
+      player.endGame(true);
       player.getMessages().forEach(msg => console.log(msg));
       await waitForKeyPress();
       break;

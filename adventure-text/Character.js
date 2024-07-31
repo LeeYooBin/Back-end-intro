@@ -62,6 +62,7 @@ class Character {
   // Função para coletar o ouro
   collectGold() {
     this.goldCollected = true;
+    this.messages.push("Você encontrou o ouro! Agora volte ao ponto de partida para vencer.");
   }
 
   // Função para retornar mensagens para situar no ambiente

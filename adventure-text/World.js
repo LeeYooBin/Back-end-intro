@@ -3,7 +3,9 @@ class World {
     this.size = size;
     this.grid = this.createGrid(size);
     this.wumpusPosition = this.placeItem(this.isAdjacentToStart);
-    this.goldPosition = this.placeItem(pos => pos.x !== this.wumpusPosition.x || pos.y !== this.wumpusPosition.y);
+    this.goldPosition = this.placeItem(position =>
+      position.x === this.wumpusPosition.x && position.y === this.wumpusPosition.y
+    );
     this.pits = this.placePits();
   }
 
@@ -18,12 +20,13 @@ class World {
 
   // Função auxiliar para garantir que tesouros e obstáculos não apareçam adjacentes à personagem
   isAdjacentToStart(position) {
-    const start = { x: 1, y: 1 };
+    const start = { x: 0, y: 0 };
     const adjacent = [
-      { x: start.x - 1, y: start.y }, // Esquerda
-      { x: start.x + 1, y: start.y }, // Direita
-      { x: start.x, y: start.y - 1 }, // Cima
-      { x: start.x, y: start.y + 1 }  // Baixo
+      { x: start.x - 1, y: start.y },
+      { x: start.x + 1, y: start.y },
+      { x: start.x, y: start.y - 1 },
+      { x: start.x, y: start.y + 1 },
+      { x: 1, y: 1 }
     ];
     return adjacent.some(adj => adj.x === position.x && adj.y === position.y);
   }
@@ -36,21 +39,21 @@ class World {
         x: Math.floor(Math.random() * this.size),
         y: Math.floor(Math.random() * this.size),
       };
-    } while (position.x === 0 && position.y === 0 || shouldAvoid(position));
+    } while ((position.x === 0 && position.y === 0) || shouldAvoid(position));
     return position;
   }
 
   // Posiciona os buracos
   placePits() {
     let pits = [];
-    const maxPits = this.size - 1; // O número máximo de pits é o tamanho do mundo - 1
+    const maxPits = this.size - 1;
     for (let i = 0; i < maxPits; i++) {
       let pitPosition;
       do {
-        pitPosition = this.placeItem(pos => 
-          this.isWumpus(pos) || 
-          this.isGold(pos) || 
-          this.isAdjacentToStart(pos) || 
+        pitPosition = this.placeItem(pos =>
+          this.isWumpus(pos) ||
+          this.isGold(pos) ||
+          this.isAdjacentToStart(pos) ||
           pits.some(pit => pit.x === pos.x && pit.y === pos.y)
         );
       } while (pits.some(pit => pit.x === pitPosition.x && pit.y === pitPosition.y));
@@ -61,12 +64,12 @@ class World {
 
   // Verifica se o wumpus está na posição
   isWumpus(position) {
-    return this.wumpusPosition.x === position.x && this.wumpusPosition.y === position.y;
+    return this.wumpusPosition && this.wumpusPosition.x === position.x && this.wumpusPosition.y === position.y;
   }
 
   // Verifica se o ouro está na posição
   isGold(position) {
-    return this.goldPosition.x === position.x && this.goldPosition.y === position.y;
+    return this.goldPosition && this.goldPosition.x === position.x && this.goldPosition.y === position.y;
   }
 
   // Verifica se o buraco está na posição
@@ -89,10 +92,13 @@ class World {
     const adjacents = this.getAdjacentPositions(character.position);
     for (let pos of adjacents) {
       if (this.isWumpus(pos)) {
-        console.log("Você sente um fedor...");
+        character.messages.push("Você sente um fedor...");
       }
       if (this.isPit(pos)) {
-        console.log("Você sente uma brisa...");
+        character.messages.push("Você sente uma brisa...");
+      }
+      if (this.isGold(pos)) {
+        character.messages.push("Você vê um brilho...");
       }
     }
   }
@@ -110,7 +116,6 @@ class World {
       }
       console.log(row);
     }
-    console.log(`Flechas restantes: ${character.arrows}`);
   }
 }
 

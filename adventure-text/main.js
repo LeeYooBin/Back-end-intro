@@ -3,6 +3,7 @@ const readline = require("readline");
 const Character = require("./Character");
 const World = require("./World");
 
+// Aguarda o usuário pressionar enter
 const waitForKeyPress = () => {
   return new Promise((resolve) => {
     const rl = readline.createInterface({
@@ -18,40 +19,45 @@ const waitForKeyPress = () => {
   });
 };
 
-const main = async () => {
-  while (true) {
-    console.clear();
-    console.log("Menu:");
-    console.log("1. Jogar");
-    console.log("2. Sair");
-
-    const choice = prompt("Escolha uma opção: ").trim();
-
-    if (choice === "1") {
-      await playGame();
-    } else if (choice === "2") {
-      console.log("Saindo do jogo. Até mais!");
-      break;
-    } else {
-      console.log("Opção inválida. Tente novamente.");
-    }
-  }
+// Função para obter uma entrada numérica válida ou retornar um valor padrão
+const getValidNumberInput = (promptText, min, max, defaultValue) => {
+  let value;
+  do {
+    const input = prompt(promptText).trim();
+    value = input === "" ? defaultValue : parseInt(input, 10);
+  } while (isNaN(value) || value < min || value > max);
+  return value;
 };
 
+// Função para obter a entrada de sim ou não para exibição do mapa
+const getValidYesNoInput = (promptText) => {
+  let input;
+  do {
+    input = prompt(promptText).trim().toLowerCase();
+  } while (input !== "s" && input !== "n");
+  return input === "s";
+};
+
+// Função que roda o jogo
 const playGame = async () => {
+  console.clear();
+  const worldSize = getValidNumberInput("Digite a dimensão do mapa (mínimo 4, padrão 4): ", 4, Infinity, 4);
+  const arrowNumber = getValidNumberInput("Digite o número de flechas (mínimo 1, máximo 3, padrão 1): ", 1, 3, 1);
+  const showMap = getValidYesNoInput("Permitir o auxílio do mapa? (s/n): ");
+
   console.clear();
   console.log("Bem-vindo ao Mundo de Wumpus!");
 
-  const worldSize = 4;
   const world = new World(worldSize);
-  const player = new Character("Jogador", 3);
+  const player = new Character("Jogador", arrowNumber);
 
   while (player.isAlive()) {
     console.clear();
-    world.displayWorld(player);
+    if (showMap) {
+      world.displayWorld(player);
+    }
     world.checkAdjacents(player);
 
-    // Mostrar mensagens do personagem
     const messages = player.getMessages();
     if (messages.length > 0) {
       messages.forEach(msg => console.log(msg));
@@ -91,80 +97,109 @@ const playGame = async () => {
       player.move(direction);
 
       if (world.isWumpus(player.position)) {
-        console.log("Você foi devorado pelo Wumpus!");
+        player.messages.push("Você foi devorado pelo Wumpus!");
         player.alive = false;
+        console.clear();
+        world.displayWorld(player);
+        player.getMessages().forEach(msg => console.log(msg));
+        await waitForKeyPress();
       } else if (world.isPit(player.position)) {
-        console.log("Você caiu em um buraco!");
+        player.messages.push("Você caiu em um buraco!");
         player.alive = false;
+        console.clear();
+        world.displayWorld(player);
+        player.getMessages().forEach(msg => console.log(msg));
+        await waitForKeyPress();
       } else if (world.isGold(player.position)) {
-        console.log("Você encontrou o ouro! Parabéns, você venceu!");
         player.collectGold();
-        break;
+        world.goldPosition = null;
       }
+
     } else if (choice === "2") {
-      console.log("\nDireções:");
+      console.log("\nAtirar flecha:");
       console.log("1. Cima");
       console.log("2. Baixo");
       console.log("3. Esquerda");
       console.log("4. Direita");
       const shootChoice = prompt("Escolha uma direção: ").trim();
 
-      let direction;
+      let shootDirection;
       switch (shootChoice) {
         case "1":
-          direction = "up";
+          shootDirection = "up";
           break;
         case "2":
-          direction = "down";
+          shootDirection = "down";
           break;
         case "3":
-          direction = "left";
+          shootDirection = "left";
           break;
         case "4":
-          direction = "right";
+          shootDirection = "right";
           break;
         default:
           console.log("Direção inválida");
       }
 
       if (player.shoot()) {
-        console.log("Você atirou uma flecha!");
-        if (checkShoot(direction, player.position, world)) {
-          console.log("Você matou o Wumpus!");
-          break;
+        const hitPosition = { ...player.position };
+
+        switch (shootDirection) {
+          case "up":
+            hitPosition.y -= 1;
+            break;
+          case "down":
+            hitPosition.y += 1;
+            break;
+          case "left":
+            hitPosition.x -= 1;
+            break;
+          case "right":
+            hitPosition.x += 1;
+            break;
+        }
+
+        if (world.isWumpus(hitPosition)) {
+          player.messages.push("Você matou o Wumpus! Agora colete o ouro e volte ao ponto de partida.");
+          world.wumpusPosition = null;
         } else {
-          console.log("Você errou o Wumpus.");
+          player.messages.push("Você errou a flecha.");
         }
       }
     } else {
       console.log("Opção inválida. Tente novamente.");
     }
-  }
 
-  if (!player.isAlive()) {
-    console.log("Fim de jogo!");
+    if (player.goldCollected && player.position.x === 0 && player.position.y === 0) {
+      console.clear();
+      world.displayWorld(player);
+      player.messages.push("Parabéns! Você coletou o ouro e voltou ao ponto de partida. Você venceu!");
+      player.getMessages().forEach(msg => console.log(msg));
+      await waitForKeyPress();
+      break;
+    }
   }
-
-  await waitForKeyPress();
 };
 
-const checkShoot = (direction, position, world) => {
-  let targetPosition = { ...position };
-  switch (direction) {
-    case "up":
-      targetPosition.y -= 1;
+// Função principal
+const main = async () => {
+  while (true) {
+    console.clear();
+    console.log("1. Jogar");
+    console.log("2. Sair");
+
+    const choice = prompt("Escolha uma opção: ").trim();
+
+    if (choice === "1") {
+      await playGame();
+    } else if (choice === "2") {
+      console.log("Encerrando o programa...");
       break;
-    case "down":
-      targetPosition.y += 1;
-      break;
-    case "left":
-      targetPosition.x -= 1;
-      break;
-    case "right":
-      targetPosition.x += 1;
-      break;
+    } else {
+      console.log("\nOpção inválida. Tente novamente.");
+      await waitForKeyPress();
+    }
   }
-  return world.isWumpus(targetPosition);
 };
 
 main();
